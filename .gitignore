@@ -115,6 +115,7 @@ venv.bak/
 
 # mkdocs documentation
 /site
+/bin
 
 # mypy
 .mypy_cache/
@@ -123,3 +124,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+# Pickle Data
+*.pkl
