@@ -19,7 +19,7 @@ For the demo I used the IMBD mood data set for a semi-supervised training.
 # Calculate the Graph Edges
 ****
 
-![]("weights_formula.png")
+![]("Notebooks/weights_formula.png")
 
 **PMI**  
 
@@ -66,7 +66,7 @@ $$,
 with $\mathbb{y}_L$ as set of document idices that have labels and $F$ is the dimension of the output features, which is equal to the number of classes.
 
 
-![]("GCN.png")
+![]("Notebooks/GCN.png")
 
 ## Train 
 
