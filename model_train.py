@@ -151,7 +151,6 @@ A_hat = load_pickle("A_hat.pkl")
 
 
 # Build, Train, Test
-
 from __future__ import absolute_import, division, print_function
 import tensorflow as tf
 from tensorflow.contrib.slim import fully_connected
@@ -190,28 +189,27 @@ biases = {
 def convLayer(X, A_hat_tf, w, b ):
     X = tf.add(tf.matmul(X, w), b)  # [?,440][440, 330] + [330] = 440x330
     X = tf.matmul(A_hat_tf, X)  # [440, 440][440,330] = [440,330]
-    
-    return tf.nn.relu(X)
+    return X
 
 
 def gcn(X, weights, biases, A_hat, dropout):
-
     # First convolution layer ?x330
     conv1 = convLayer(X, A_hat_tf, weights['h1'], biases["b1"])
+    conv1 = tf.nn.relu(conv1)
+    conv1 = tf.nn.dropout(conv1)
     # Second convolution layer 330x130
     conv2 = convLayer(conv1, A_hat_tf, weights['h2'], biases["b2"])
     # Fully connected layer / Linear layer for logit
     logits = fully_connected(conv2, n_classes, activation_fn = None)
-    # Apply Dropout
-    #logits = tf.nn.dropout(logits, dropout)
+    pred = tf.nn.softmax(logits)
     
-    return logits
+    return pred
     
 
 # Build the GCN
 pred = gcn(X, weights, biases, A_hat_tf, dropout)
 
-#Filter training document nodes for semi-supervised learning
+# Filter training document nodes for semi-supervised learning
 pred = tf.gather(pred, indices = idx_selected)
 
 # Define optimizer and loss
@@ -226,11 +224,17 @@ accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 # Start trainings session
 init  = tf.global_variables_initializer()
 saver = tf.train.Saver()
+
+logs = {}
+logs["acc"] = []
+logs["loss"] = []
+
+
 with tf.Session() as sess:
     
     sess.run(init)
     
-    for e in range(1000):
+    for e in range(5):
         
         batch_x = f # one hot for each node (word + docs) in the graph
         batch_y = np.eye(n_classes)[y_train]
@@ -240,12 +244,16 @@ with tf.Session() as sess:
                                          keep_prob: dropout,
                                          idx_selected: idx_train})
         
-        loss, acc = sess.run([cost, accuracy], feed_dict = {X: batch_x,
+        loss, acc = sess.run([cost,  accuracy], feed_dict = {X: batch_x,
                                                             y: batch_y,
                                                             keep_prob: 1.,
                                                             idx_selected: idx_train})
         
         print("Epoch ", e, "Batch size: ", batch_y.shape[0] ,"Batch loss: ", loss, "Training accuracy: ", acc)
+        
+        logs["acc"].append(acc)
+        logs["loss"].append(loss)
+
     
     # save_path = saver.save(sess, "drive/My Drive/Coding/GCN/data/model.ckpt")
 
@@ -254,12 +262,12 @@ with tf.Session() as sess:
     print("Store model weights and biases")
     weights_dict = {}
     for key, values in weights.items():
-        weights_dict[key] = sess.run(values)
+      weights_dict[key] = sess.run(values)
     save_as_pickle("weights.pkl", weights_dict)
 
     biases_dict = {}
     for key, values in biases.items():
-        biases_dict[key] = sess.run(values)
+      biases_dict[key] = sess.run(values)
     save_as_pickle("biases.pkl", biases_dict)
 
     # Calculate acc for test docs
@@ -270,3 +278,5 @@ with tf.Session() as sess:
                                                keep_prob: 1.,
                                                idx_selected: idx_test})
     print("Testing accuracy: ", test_acc, "Batch size: ", batch_y.shape[0])
+
+    sess.close()
