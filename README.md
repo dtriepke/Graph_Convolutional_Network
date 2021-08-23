@@ -2,7 +2,7 @@
 
 This project was designed to create a text based gcn in Tensorflow 1.x. Each node in the graph represents either a word or a document from the corpus. So the edges are relative relations between either word-word pairs or word-document pairs. 
 
-For the demo I used the IMBD mood data set for a semi-supervised training.
+For the demo I used the IMDb mood data set for a semi-supervised training.
 
 
 ## Sources:
